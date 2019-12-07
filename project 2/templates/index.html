@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>NYC Shootings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">  <!-- style sheet for bootstrap -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style2.css') }}">
+    
+
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
+    integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js"
+    integrity="sha512-tAGcCfR4Sc5ZP5ZoVz0quoZDYX5aCtEm/eu1KhSLj2c9eFrylXZknQYmxUssFaVJKvvc0dJQixhGjG2yXWiV9Q=="
+    crossorigin=""></script>
+
+
+  </head>
+
+
+
+<body>
+    <div class="container">
+      
+  
+      <div class="row">
+        <div class="col-md-12">
+          <h2>NYC Shootings</h2>
+          <div id="plot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+    <div id="svg-area"></div>
+    <div id='graphDiv'></div>
+
+
+    <div class="row">
+        <div class="col-md-12">
+          <h2>Map Below</h2>
+          <div id="map"></div>
+        </div>
+        <script src="{{ url_for('static', filename='js/config.js') }}"></script>
+
+        <!-- map code -->
+        <script src="{{ url_for('static', filename='js/logic.js') }}"></script> 
+        
+        <!-- <script type="text/javascript" src="js/logic2.js"></script> -->
+        
+        
+    </div>
+  </div>
+
+    
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.5.0/d3.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <div class="container">
+
+    <div class="row">
+        <h3>SLIDER BELOW</h3>
+    </div>
+
+    <div class="row">
+
+      <div class="col-md-6">
+          <!-- <div id="svg"></div> -->
+          
+          <div id="sliderdiv"><input id="slider" type="range" min="0" max="2283" step="1" value="10"/></div>
+
+          <h4>Current Date:</h4>
+          <h5 id="curdate"></h5>
+
+      </div>
+
+      <div class="col-md-6">
+
+          <input type="checkbox" id="myCheck" onclick="myFunction()">
+      
+          <p id="text" style="display:block">Remove Previous Markers</p>
+        </div>
+    </div>
+
+    <div class="row">
+
+  </div>
+    
+
+
+    <div class="col-md-3">
+      <aside class="filters">
+        <div class="panel panel-default">
+          <div class="panel-heading">Filter Search</div>
+          <div class="panel-body">
+            <form>
+              <div class="form-group">
+                <ul class="list-group" id="filters">
+                  <li class="filter list-group-item">
+                    <label for="date">Enter a Date from 10/1/2012 to 12/31/2018</label>
+                    <input class="form-control" id="datetime" type="text" placeholder="10/1/2012">
+                  </li>
+                </ul>
+              </div>
+              <button id="filter-btn" type="button" class="btn btn-default">Filter Table</button>
+            </form>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+  </div>
+    
+
+
+<script>
+
+// Select the button
+var button = d3.select("#filter-btn");
+// console.log(button);
+
+var marker2 = new Array();
+var remove_markers_flag = true;
+
+function myFunction() {
+  // Get the checkbox
+  var checkBox = document.getElementById("myCheck");
+  // Get the output text
+  var text = document.getElementById("text");
+
+  // If the checkbox is checked, display the output text
+  if (checkBox.checked == true){
+    text.style.display = "block";
+    remove_markers_flag = true;
+
+  } else {
+    text.style.display = "block";
+    remove_markers_flag = false;
+  }
+} 
+
+function removemarkers(){
+  try {
+      for(i=0;i<marker2.length;i++) {
+        myMap.removeLayer(marker2[i]);
+        // console.log("removed " , i, " from the map!")
+        } 
+        marker2 = []; 
+        }
+        catch(error) {
+          console.error(error);
+          }
+}
+
+
+function addmarkers(inputDate){
+  // var filteredData = data.filter(ufoSighting => ufoSighting.DATE === inputValue);
+  // console.log(filteredData[0].Latitude);
+  var url = "/shootingsdata";
+  d3.json(url).then(function(response) {
+    // console.log(response);
+    var data = response;
+    var filteredData = data.filter(ufoSighting => ufoSighting.DATE === inputDate);
+    // console.log(filteredData[0].Latitude);
+    if (remove_markers_flag == true){
+      removemarkers();
+    };
+    
+        for(i=0;i<filteredData.length;i++){
+          // console.log(" Lat:", filteredData[i].Latitude, " Long:", filteredData[i].Longitude);
+          LamMarker = L.marker([filteredData[i].Latitude, filteredData[i].Longitude], {
+            draggable: true,
+            title: "My First Marker"
+            }).addTo(myMap);
+            marker2.push(LamMarker);
+            myMap.addLayer(marker2[i]); 
+            // console.log("added" , i, "to the map!")
+            }
+    });
+}
+
+
+
+
+button.on("click", function() {
+  // Select the input element and get the raw HTML node
+  var inputElement = d3.select("#datetime");
+
+  // Get the value property of the input element
+  var inputValue = inputElement.property("value");
+  d3.select("#curdate").text(inputValue);
+  addmarkers(inputValue)
+
+
+});
+</script>
+
+<script>
+
+function addDays(date, days) {
+  var result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function getYear(dateobject){
+
+  addDays(Date.parse(dateobject.DATE),0).getFullYear()
+  
+       y = addDays(Date.parse(dateobject.DATE),0).getFullYear();
+       return y;
+     }
+
+d3.select("#slider").on("input", function() {
+    var currentValue = this.value;
+    // console.log("currentvalue is ", currentValue);
+    // console.log(typeof(+currentValue));
+    startdate = Date.parse("10/01/2012");
+
+
+
+    startdate = addDays(startdate,0);
+    // console.log("startdate is ", startdate);
+    currentdate = addDays(startdate,+currentValue);
+    
+    // console.log("currentdate is ", currentdate);
+    var date = currentdate.getDate();
+    var month = currentdate.getMonth(); 
+    var year = currentdate.getFullYear();
+    var monthDateYear  = (month+1) + "/" + date + "/" + year;
+    d3.select("#curdate").text(monthDateYear);
+    d3.select(".form-control").text(monthDateYear);
+    // console.log("currentdate is ", monthDateYear);
+    addmarkers(monthDateYear);
+
+})
+
+</script>
+
+<div id="myDiv"></div>
+
+<div class="col-md-2">
+  <aside class="filters">
+    <div class="panel panel-default">
+      <div class="panel-heading">Filter Shootings By Year</div>
+      <div class="panel-body">
+        <form>
+          <div class="form-group">
+            <ul class="list-group" id="filteryear">
+              <li class="filter list-group-item">
+                <label for="date">Enter a Year from 2012 to 2018</label>
+                <input class="form-control" id="datetime2" type="text" placeholder="2012">
+              </li>
+            </ul>
+          </div>
+          <button id="filter-btn2" type="button" class="btn btn-default">Filter Table</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+</div>
+
+
+<script>
+
+  var inputYear = "2012"
+  var button2 = d3.select("#filter-btn2");
+
+  button2.on("click", function() {
+  // Select the input element and get the raw HTML node
+  var inputElement = d3.select("#datetime2");
+
+  // Get the value property of the input element
+  inputYear = inputElement.property("value");
+  console.log(inputYear);
+
+  
+  var url = "/weatherdata";
+  var dates;
+  var trace2 ;
+
+
+  d3.json(url).then(function(response) {
+    // console.log(response);
+     weather_data = response;
+     
+
+    //  function getYear(dateobject){
+    //    y = addDays(Date.parse(dateobject.DATE),0).getFullYear();
+    //    return y;
+    //  }
+
+     weather_data = weather_data.filter(ufoSighting => getYear(ufoSighting) == inputYear);
+      // console.log(weather_data2);
+    // console.log(addDays(Date(weather_data[0].DATE),0).getFullYear());
+    // console.log(addDays(Date(weather_data[0]),1));
+    // console.log(addDays(Date.parse(weather_data[0].DATE),0).getFullYear());
+
+     temps = weather_data.map((item)=>{return item.Farenheit});
+     dates = weather_data.map((item)=>{return item.DATE});
+    //  console.log(dates);
+
+
+
+     traceTemp = {
+      x: dates,
+      y: temps,
+      name: 'Temps',
+      yaxis: 'y2',
+      mode: 'lines',
+      type: 'scatter'
+
+    };
+
+    var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'BLACK');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+    
+    
+    var trace1 = {
+      // x: ['giraffes', 'orangutans', 'monkeys'],
+
+      // y: [1, 1, 1],
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'BLACK',
+      type: 'bar'
+      };
+
+    var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'WHITE HISPANIC');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace2 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'WHITE HISPANIC',
+      type: 'bar'
+      };
+
+      var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'BLACK HISPANIC');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace3 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'BLACK HISPANIC',
+      type: 'bar'
+      };
+
+      var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'AMERICAN INDIAN/ALASKAN NATIVE');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace4 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'AMERICAN INDIAN/ALASKAN NATIVE',
+      type: 'bar'
+      };
+
+    var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'ASIAN / PACIFIC ISLANDER');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace5 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'ASIAN / PACIFIC ISLANDER',
+      type: 'bar'
+      };
+
+      var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'WHITE');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace6 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'WHITE',
+      type: 'bar'
+      };
+
+      var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'UNKNOWN');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace7 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'UNKNOWN',
+      type: 'bar'
+      };
+
+    
+
+    var data = [trace1,trace2,trace3,trace4, trace5, trace6, trace7, traceTemp];
+    var layout = {
+      autosize: false,
+  width: 2000,
+  height: 750,
+      title: 'Shootings by Race and Temperature Analysis',
+      // yaxis: {title: 'yaxis title'},
+      barmode:'stack',
+      yaxis:{title:'shooting victims (race)',barmode:'stack'},
+      yaxis2: {
+        title: 'Temperature  (Fahenheit)',
+        titlefont: {color: 'rgb(148, 103, 189)'},
+        tickfont: {color: 'rgb(148, 103, 189)'},
+        overlaying: 'y',
+        side: 'right'
+        }
+        };
+    Plotly.newPlot('myDiv', data, layout);
+  })
+  console.log(trace2);
+
+  });
+
+  // console.log(inputYear);
+
+
+  var url = "/weatherdata";
+  var dates;
+  var trace2 ;
+
+
+  d3.json(url).then(function(response) {
+    // console.log(response);
+     weather_data = response;
+     
+
+    //  function getYear(dateobject){
+    //    y = addDays(Date.parse(dateobject.DATE),0).getFullYear();
+    //    return y;
+    //  }
+
+     weather_data = weather_data.filter(ufoSighting => getYear(ufoSighting) == inputYear);
+      // console.log(weather_data2);
+    // console.log(addDays(Date(weather_data[0].DATE),0).getFullYear());
+    // console.log(addDays(Date(weather_data[0]),1));
+    // console.log(addDays(Date.parse(weather_data[0].DATE),0).getFullYear());
+
+     temps = weather_data.map((item)=>{return item.Farenheit});
+     dates = weather_data.map((item)=>{return item.DATE});
+    //  console.log(dates);
+
+
+
+     traceTemp = {
+      x: dates,
+      y: temps,
+      name: 'Temps',
+      yaxis: 'y2',
+      mode: 'lines',
+      type: 'scatter'
+
+    };
+
+    var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'BLACK');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+    
+    
+    var trace1 = {
+      // x: ['giraffes', 'orangutans', 'monkeys'],
+
+      // y: [1, 1, 1],
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'BLACK',
+      type: 'bar'
+      };
+
+    var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'WHITE HISPANIC');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace2 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'WHITE HISPANIC',
+      type: 'bar'
+      };
+
+      var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'BLACK HISPANIC');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace3 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'BLACK HISPANIC',
+      type: 'bar'
+      };
+
+      var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'AMERICAN INDIAN/ALASKAN NATIVE');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace4 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'AMERICAN INDIAN/ALASKAN NATIVE',
+      type: 'bar'
+      };
+
+    var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'ASIAN / PACIFIC ISLANDER');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace5 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'ASIAN / PACIFIC ISLANDER',
+      type: 'bar'
+      };
+
+      var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'WHITE');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace6 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'WHITE',
+      type: 'bar'
+      };
+
+      var filteredData1 = weather_data.filter(ufoSighting => ufoSighting.VIC_RACE === 'UNKNOWN');
+    filteredData1_dates = filteredData1.map((item)=>{return item.DATE});
+    filteredData1_count = filteredData1.map((item)=>{return item.count});
+
+    var trace7 = {
+      x: filteredData1_dates,
+      y: filteredData1_count,
+
+      name: 'UNKNOWN',
+      type: 'bar'
+      };
+
+    
+
+// //     var trace1 = {
+// //   x: ['giraffes', 'orangutans', 'monkeys'],
+// //   y: [20, 14, 23],
+// //   name: 'SF Zoo',
+// //   type: 'bar'
+// // };
+
+// // var trace2 = {
+// //   x: ['giraffes', 'orangutans', 'monkeys'],
+// //   y: [12, 18, 29],
+// //   name: 'LA Zoo',
+// //   type: 'bar'
+// // };
+
+
+    var data = [trace1,trace2,trace3,trace4, trace5, trace6, trace7, traceTemp];
+    var layout = {
+      autosize: false,
+  width: 2000,
+  height: 750,
+      title: 'Shootings by Race and Temperature Analysis',
+      // yaxis: {title: 'yaxis title'},
+      barmode:'stack',
+      yaxis:{title:'shooting victims (race)',barmode:'stack'},
+      yaxis2: {
+        title: 'Temperature  (Fahenheit)',
+        titlefont: {color: 'rgb(148, 103, 189)'},
+        tickfont: {color: 'rgb(148, 103, 189)'},
+        overlaying: 'y',
+        side: 'right'
+        }
+        };
+    Plotly.newPlot('myDiv', data, layout);
+  })
+  console.log(trace2);
+
+
+
+
+
+
+// var trace1 = {
+//   x: [1, 2, 3],
+//   y: [40, 50, 60],
+//   name: 'yaxis data',
+//   type: 'scatter'
+// };
+
+// var trace2 = {
+//   x: [2, 3, 4],
+//   y: [4, 5, 6],
+//   name: 'yaxis2 data',
+//   yaxis: 'y2',
+//   type: 'scatter'
+// };
+
+// var data = [trace1, trace2];
+
+// var layout = {
+//   title: 'Double Y Axis Example',
+//   yaxis: {title: 'yaxis title'},
+//   yaxis2: {
+//     title: 'yaxis2 title',
+//     titlefont: {color: 'rgb(148, 103, 189)'},
+//     tickfont: {color: 'rgb(148, 103, 189)'},
+//     overlaying: 'y',
+//     side: 'right'
+//   }
+// };
+
+// Plotly.newPlot('myDiv', data, layout);
+
+
+</script>
+
+
+
+
+</body>
+  
+</html>

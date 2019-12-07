@@ -1,0 +1,51 @@
+/* remove default margin and padding from body */
+body {
+  padding: 0;
+  margin: 0;
+}
+
+/* set map, body, and html to 100% of the screen size */
+/* #map,
+html {
+  height: 1000px;
+  width: 100%;
+} */
+
+#map {
+  height: 600px;
+  width: 80%;
+  padding: 50;
+  margin: 50;
+  margin: auto;
+}
+
+.bar {
+  fill: orange;
+}
+
+.bar:hover {
+  fill: green;
+}
+
+body { font: 12px Arial;}
+path {
+  stroke-width: 2;
+  fill: none;
+}
+.axis path, .axis line {
+  fill: none;
+  stroke: grey;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.area {
+  fill: #F0F8FF;
+  stroke-width: 0;
+}
+
+#slider {
+  width: 435px;
+}
+#sliderdiv{
+  padding-left: 40px;
+ }
